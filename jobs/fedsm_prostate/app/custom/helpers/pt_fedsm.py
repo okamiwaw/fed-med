@@ -167,7 +167,6 @@ class PTFedSMHelper(object):
                 select = np.ones(images.size()[0], dtype=np.int64) * select_label
                 select = torch.tensor(select).to(self.device)
                 # inference
-                
                 outputs = self.select_model(images)
                 # compute metric
                 metric_score = AccuracyTopK(outputs, select, topk=(1,))
