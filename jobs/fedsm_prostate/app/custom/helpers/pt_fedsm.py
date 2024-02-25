@@ -162,7 +162,7 @@ class PTFedSMHelper(object):
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
                 # input and expected output
-                images = batch_data["image"].to(self.device)
+                images = batch_data["pixel_values"].to(self.device)
                 # generate label vector: image batch_size, same label
                 select = np.ones(images.size()[0], dtype=np.int64) * select_label
                 select = torch.tensor(select).to(self.device)
