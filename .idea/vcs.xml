@@ -2,5 +2,6 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="$PROJECT_DIR$" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/jobs/fedsm_prostate/app/custom/Bio_ClinicalBERT" vcs="Git" />
   </component>
 </project>

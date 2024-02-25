@@ -131,7 +131,7 @@ class PTFedSMHelper(object):
             for i, batch_data in enumerate(train_loader):
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                inputs = batch_data["image"].to(self.device)
+                inputs = batch_data["pixel_values"].to(self.device)
                 # construct vector of selector label
                 labels = np.ones(inputs.size()[0], dtype=np.int64) * select_label
                 labels = torch.tensor(labels).to(self.device)

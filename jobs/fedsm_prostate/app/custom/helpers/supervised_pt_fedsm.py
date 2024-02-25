@@ -19,6 +19,8 @@ from nvflare.apis.fl_constant import ReturnCode
 from nvflare.apis.shareable import make_reply
 from nvflare.apis.signal import Signal
 
+from medclip.losses import ImageTextContrastiveLoss
+
 
 class SupervisedPTFedSMHelper(PTFedSMHelper):
     """Helper to be used with FedSM components under supervised training specs"""
@@ -54,22 +56,19 @@ class SupervisedPTFedSMHelper(PTFedSMHelper):
         for epoch in range(self.person_model_epochs):
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
-            self.person_model.train()
+            loss_model = ImageTextContrastiveLoss(self.person_model).to(self.device)
+            loss_model.train()
             epoch_len = len(train_loader)
             epoch_global = current_round * self.person_model_epochs + epoch
-            for i, batch_data in enumerate(train_loader):
+            for i, data in enumerate(train_loader):
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                inputs = batch_data["image"].to(self.device)
-                labels = batch_data["label"].to(self.device)
 
-                # forward + backward + optimize
-                outputs = self.person_model(inputs)
-                loss = self.person_criterion(outputs, labels)
-
-                self.person_optimizer.zero_grad()
+                loss_return = loss_model(**data)
+                loss = loss_return['loss_value']
                 loss.backward()
                 self.person_optimizer.step()
+                self.person_optimizer.zero_grad()
 
                 current_step = epoch_len * epoch_global + i
                 writer.add_scalar("train_loss_personalized", loss.item(), current_step)

@@ -70,14 +70,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         # personalized and selector model training epoch
         # personalized model same as global model
         # selector model can be different from the other two task models
-        fedsm_person_model = UNet(
-            spatial_dims=2,
-            in_channels=1,
-            out_channels=1,
-            channels=(16, 32, 64, 128, 256),
-            strides=(2, 2, 2, 2),
-            num_res_units=2,
-        ).to(self.device)
+        fedsm_person_model =self.model
         fedsm_select_model = vgg11(
             num_classes=self.config_info["select_num_classes"],
         ).to(self.device)

@@ -25,7 +25,9 @@ from nvflare.apis.shareable import Shareable, make_reply
 from nvflare.apis.signal import Signal
 from nvflare.app_common.abstract.learner_spec import Learner
 from nvflare.app_common.app_constant import AppConstants, ValidateType
-
+from medclip.losses import ImageTextContrastiveLoss
+from medclip.modeling_medclip import MedCLIPModel, PromptClassifier, MedCLIPVisionModel, MedCLIPVisionModelViT
+from medclip.evaluator import Evaluator
 
 class SupervisedLearner(Learner):
     def __init__(
@@ -120,7 +122,8 @@ class SupervisedLearner(Learner):
         for epoch in range(self.aggregation_epochs):
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
-            self.model.train()
+            loss_model = ImageTextContrastiveLoss(self.model).to(self.device)
+            loss_model.train()
             epoch_len = len(train_loader)
             epoch_global = current_round * self.aggregation_epochs + epoch
             self.log_info(
@@ -130,16 +133,11 @@ class SupervisedLearner(Learner):
             for i, batch_data in enumerate(train_loader):
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                inputs = batch_data["image"].to(self.device)
-                labels = batch_data["label"].to(self.device)
-
-                # forward + backward + optimize
-                outputs = self.model(inputs)
-                loss = self.criterion(outputs, labels)
-
-                self.optimizer.zero_grad()
+                loss_return = loss_model(**batch_data)
+                loss = loss_return['loss_value']
                 loss.backward()
                 self.optimizer.step()
+                self.optimizer.zero_grad()
                 current_step = epoch_len * epoch_global + i
                 self.writer.add_scalar("train_loss", loss.item(), current_step)
 
@@ -158,25 +156,17 @@ class SupervisedLearner(Learner):
         Compute evaluation metric with self.valid_metric
         Add score to tensorboard record with specified id
         """
-        model.eval()
-        with torch.no_grad():
-            metric = 0
-            for i, batch_data in enumerate(valid_loader):
-                if abort_signal.triggered:
-                    return make_reply(ReturnCode.TASK_ABORTED)
-                val_images = batch_data["image"].to(self.device)
-                val_labels = batch_data["label"].to(self.device)
-                # Inference
-                val_outputs = self.inferer(val_images, model)
-                val_outputs = self.transform_post(val_outputs)
-                # Compute metric
-                metric_score = self.valid_metric(y_pred=val_outputs, y=val_labels)
-                metric += metric_score.item()
-            # compute mean dice over whole validation set
-            metric /= len(valid_loader)
-            # tensorboard record id, add to record if provided
-            if tb_id:
-                self.writer.add_scalar(tb_id, metric, current_round)
+        medclip_clf = PromptClassifier(model)
+        evaluator = Evaluator(
+            medclip_clf=medclip_clf,
+            eval_dataloader = valid_loader,
+            mode='multiclass',
+        )
+        scores = self.evaluator.evaluate()
+        metric = scores['auc']
+        # tensorboard record id, add to record if provided
+        if tb_id:
+            self.writer.add_scalar(tb_id, metric, current_round)
         return metric
 
     def train(

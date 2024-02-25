@@ -23,19 +23,23 @@ from monai.inferers import SimpleInferer
 from monai.losses import DiceLoss
 from monai.metrics import DiceMetric
 from monai.networks.nets.unet import UNet
-from monai.transforms import (
-    Activations,
-    AsDiscrete,
-    AsDiscreted,
-    Compose,
-    EnsureChannelFirstd,
-    EnsureType,
-    EnsureTyped,
-    LoadImaged,
-    Resized,
-    ScaleIntensityRanged,
-)
-from utils.custom_client_datalist_json_path import custom_client_datalist_json_path
+
+import pdb, os
+import random
+
+import numpy as np
+import pandas as pd
+import torch
+from torch.utils.data import DataLoader
+from torchvision import transforms
+
+from medclip.modeling_medclip import MedCLIPModel, PromptClassifier, MedCLIPVisionModel, MedCLIPVisionModelViT
+from medclip.dataset import ImageTextContrastiveDataset, ZeroShotImageDataset
+from medclip.dataset import ImageTextContrastiveCollator, ZeroShotImageCollator
+
+from medclip.evaluator import Evaluator
+from medclip import constants
+from medclip.prompts import generate_class_prompts, generate_chexpert_class_prompts, generate_covid_class_prompts
 
 from nvflare.apis.fl_context import FLContext
 from nvflare.app_common.app_constant import AppConstants
@@ -98,96 +102,52 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         # Get the config_info
         self.lr = self.config_info["learning_rate"]
         cache_rate = self.config_info["cache_dataset"]
-        dataset_base_dir = self.config_info["dataset_base_dir"]
-        datalist_json_path = self.config_info["datalist_json_path"]
-
-        # Get datalist json
-        datalist_json_path = custom_client_datalist_json_path(datalist_json_path, self.client_id)
-
-        # Set datalist
-        train_list = load_decathlon_datalist(
-            data_list_file_path=datalist_json_path,
-            is_segmentation=True,
-            data_list_key="training",
-            base_dir=dataset_base_dir,
-        )
-        valid_list = load_decathlon_datalist(
-            data_list_file_path=datalist_json_path,
-            is_segmentation=True,
-            data_list_key="validation",
-            base_dir=dataset_base_dir,
-        )
-        self.log_info(
-            fl_ctx,
-            f"Training Size: {len(train_list)}, Validation Size: {len(valid_list)}",
-        )
-
+        dataset_path = self.config_info["dataset_base_dir"]
+        datalist_path = self.config_info["datalist_json_path"]
         # Set the training-related context
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model = UNet(
-            spatial_dims=2,
-            in_channels=1,
-            out_channels=1,
-            channels=(16, 32, 64, 128, 256),
-            strides=(2, 2, 2, 2),
-            num_res_units=2,
-        ).to(self.device)
+        self.model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.criterion = DiceLoss(sigmoid=True)
 
-        self.transform = Compose(
-            [
-                LoadImaged(keys=["image", "label"]),
-                EnsureChannelFirstd(keys=["image", "label"]),
-                ScaleIntensityRanged(keys=["image", "label"], a_min=0, a_max=255, b_min=0.0, b_max=1.0),
-                Resized(
-                    keys=["image", "label"],
-                    spatial_size=(256, 256),
-                    mode=("bilinear"),
-                    align_corners=True,
-                ),
-                AsDiscreted(keys=["label"], threshold=0.5),
-                EnsureTyped(keys=["image", "label"]),
-            ]
+        transform = transforms.Compose([
+            transforms.RandomHorizontalFlip(0.5),
+            transforms.ColorJitter(0.2, 0.2),
+            transforms.RandomAffine(degrees=10, scale=(0.8, 1.1), translate=(0.0625, 0.0625)),
+            transforms.Resize((256, 256)),
+            transforms.RandomCrop((constants.IMG_SIZE, constants.IMG_SIZE)),
+            transforms.ToTensor(),
+            transforms.Normalize(mean=[constants.IMG_MEAN], std=[constants.IMG_STD])],
         )
-        self.transform_post = Compose([EnsureType(), Activations(sigmoid=True), AsDiscrete(threshold=0.5)])
+        traindata = ImageTextContrastiveDataset(datalist_path=datalist_path, dataset_path=dataset_path,
+                                                imgtransform=transform)
+        self.log_info(
+            fl_ctx,
+            f"Training Size: {len(traindata)}, Validation Size: {len()}",
+        )
+        train_collate_fn = ImageTextContrastiveCollator()
 
-        # Set dataset
-        if cache_rate > 0.0:
-            train_dataset = CacheDataset(
-                data=train_list,
-                transform=self.transform,
-                cache_rate=cache_rate,
-                num_workers=0,
-            )
-            valid_dataset = CacheDataset(
-                data=valid_list,
-                transform=self.transform,
-                cache_rate=cache_rate,
-                num_workers=0,
-            )
-        else:
-            train_dataset = Dataset(
-                data=train_list,
-                transform=self.transform,
-            )
-            valid_dataset = Dataset(
-                data=valid_list,
-                transform=self.transform,
-            )
-
-        self.train_loader = DataLoader(
-            train_dataset,
-            batch_size=1,
-            shuffle=True,
-            num_workers=0,
-        )
-        self.valid_loader = DataLoader(
-            valid_dataset,
-            batch_size=1,
-            shuffle=False,
-            num_workers=0,
-        )
+        train_dataloader = DataLoader(traindata,
+                                 batch_size=10,
+                                 collate_fn=train_collate_fn,
+                                 shuffle=True,
+                                 pin_memory=True,
+                                 num_workers=1,
+                                 )
+        cls_prompts = generate_chexpert_class_prompts(n=10)
+        val_data = ZeroShotImageDataset(['chexpert_5x200'],
+                                        class_names=constants.CHEXPERT_COMPETITION_TASKS)
+        val_collate_fn = ZeroShotImageCollator(cls_prompts=cls_prompts,
+                                               mode='multiclass')
+        val_dataloader = DataLoader(val_data,
+                                     batch_size=20,
+                                     collate_fn=val_collate_fn,
+                                     shuffle=False,
+                                     pin_memory=True,
+                                     num_workers=1,
+                                     )
+        self.train_loader = train_dataloader
+        self.valid_loader = val_dataloader
 
         # Set inferer and evaluation metric
         self.inferer = SimpleInferer()
