@@ -1,0 +1,5 @@
+# 忽略所有.log文件
+*.log
+
+# 忽略特定目录
+data/data_set/
