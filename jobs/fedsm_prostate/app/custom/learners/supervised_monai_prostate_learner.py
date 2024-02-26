@@ -121,6 +121,7 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         )
         traindata = ImageTextContrastiveDataset(datalist_path=datalist_path, dataset_path=dataset_path,
                                                 imgtransform=transform, client_id = self.client_id)
+        print('the lenth of traindata:', len(traindata))
         self.log_info(
             fl_ctx,
             f"Training Size: {len(traindata)}, Validation Size: {len()}",
