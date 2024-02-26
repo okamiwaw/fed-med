@@ -19,8 +19,8 @@ from medclip.prompts import generate_class_prompts, generate_chexpert_class_prom
 from networks.vgg import vgg11
 import torch.optim as optim
 
-datalist_path = "D:\\Codes\\ML\\fed-med\\data\\data_list"
-dataset_path = "D:\\Codes\\ML\\fed-med\\data\\data_set"
+datalist_path = "/root/autodl-tmp/fed-med/data/data_list"
+dataset_path =  "/root/autodl-tmp/fed-med/data/data_set"
 # Get datalist json
 
 
@@ -33,7 +33,7 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[constants.IMG_MEAN], std=[constants.IMG_STD])],
 )
-traindata = ImageTextContrastiveDataset(datalist_path= datalist_path, dataset_path= dataset_path,imgtransform=transform)
+traindata = ImageTextContrastiveDataset(datalist_path= datalist_path, dataset_path= dataset_path,imgtransform=transform, client_id= "client_1")
 train_collate_fn = ImageTextContrastiveCollator()
 trainloader = DataLoader(traindata,
                          batch_size=10,
