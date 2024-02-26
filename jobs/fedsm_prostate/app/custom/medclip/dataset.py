@@ -193,15 +193,14 @@ class ImageTextContrastiveDataset(Dataset):
             self.transform = imgtransform
 
         # use labeled sentences as prompts for chexpert training
-        self.sentence_label = pd.read_csv('../local_data/sentence-label.csv')
-        print('load sentence prompts from ../local_data/sentence-label.csv')
+        self.sentence_label = pd.read_csv('/root/autodl-tmp/fed-med/jobs/fedsm_prostate/app/custom/local_data/sentence-label.csv')
+        print('load sentence prompts from sentence-label.csv')
         self._preprocess_sentence_label()
         self._build_prompt_sentence()
 
     def __getitem__(self, index):
         row = self.df.iloc[index]
         img = Image.open(self.dataset_path + '/' + row.imgpath)
-        print(img)
         img = self._pad_img(img)  # pad image to square
         img = self.transform(img).unsqueeze(1)
         report = row.report  # original sentences list
