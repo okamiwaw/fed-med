@@ -405,7 +405,7 @@ class ZeroShotImageDataset(Dataset):
         # imgpath, subject_id, report, labels...(14 labels)
         df_list = []
         for data in datalist:
-            filename = f'../local_data/{data}.csv'
+            filename = f'/root/autodl-tmp/fed-med/jobs/fedsm_prostate/app/custom/local_data/{data}.csv'
             print('load data from', filename)
             df = pd.read_csv(filename, index_col=0)
             df_list.append(df)
