@@ -162,7 +162,7 @@ class SupervisedLearner(Learner):
             eval_dataloader = valid_loader,
             mode='multiclass',
         )
-        scores = self.evaluator.evaluate()
+        scores = evaluator.evaluate()
         metric = scores['acc']
         # tensorboard record id, add to record if provided
         if tb_id:
