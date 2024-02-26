@@ -25,6 +25,8 @@ from nvflare.apis.shareable import Shareable, make_reply
 from nvflare.apis.signal import Signal
 from nvflare.app_common.abstract.learner_spec import Learner
 from nvflare.app_common.app_constant import AppConstants, ValidateType
+from tqdm import tqdm
+
 from medclip.losses import ImageTextContrastiveLoss
 from medclip.modeling_medclip import MedCLIPModel, PromptClassifier, MedCLIPVisionModel, MedCLIPVisionModelViT
 from medclip.evaluator import Evaluator
@@ -130,7 +132,8 @@ class SupervisedLearner(Learner):
                 fl_ctx,
                 f"Local epoch {self.client_id}: {epoch + 1}/{self.aggregation_epochs} (lr={self.lr})",
             )
-            for i, batch_data in enumerate(train_loader):
+            progress_bar = tqdm(enumerate(train_loader), total=epoch_len, leave=True)
+            for i, batch_data in progress_bar:
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
                 loss_return = loss_model(**batch_data)
@@ -139,6 +142,7 @@ class SupervisedLearner(Learner):
                 self.optimizer.step()
                 self.optimizer.zero_grad()
                 current_step = epoch_len * epoch_global + i
+                progress_bar.set_postfix({"loss": loss.item()})
                 self.writer.add_scalar("train_loss", loss.item(), current_step)
 
     def local_valid(
