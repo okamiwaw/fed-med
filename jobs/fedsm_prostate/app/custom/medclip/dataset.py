@@ -175,6 +175,7 @@ class ImageTextContrastiveDataset(Dataset):
              client_id +".csv")
         filename = file_name
         print('load data from', filename)
+        print('dataset_path:', dataset_path)
         df_list = pd.read_csv(filename)
         self.df = df_list
 
@@ -201,7 +202,6 @@ class ImageTextContrastiveDataset(Dataset):
     def __getitem__(self, index):
         row = self.df.iloc[index]
         img = Image.open(self.dataset_path + '/' + row.imgpath)
-        print(img)
         img = self._pad_img(img)  # pad image to square
         img = self.transform(img).unsqueeze(1)
         report = row.report  # original sentences list
