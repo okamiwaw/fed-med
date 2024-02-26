@@ -164,7 +164,7 @@ class ImageTextContrastiveDataset(Dataset):
                 'Consolidation', 'Pneumonia', 'Atelectasis', 'Pneumothorax', 'Pleural Effusion', 'Pleural Other',
                 'Fracture', 'Support Devices']
 
-    def __init__(self, datalist_path = None, dataset_path= None, imgtransform=None) -> None:
+    def __init__(self, datalist_path = None, dataset_path= None, imgtransform=None, client_id =None) -> None:
         '''support data list in mimic-cxr-train, chexpert-train
         '''
         super().__init__()
@@ -172,7 +172,8 @@ class ImageTextContrastiveDataset(Dataset):
         self.dataset_path = dataset_path
         file_name = os.path.join(
             datalist_path,
-            "client_1" + ".csv")
+             client_id +".csv")
+        print(file_name)
         filename = file_name
         print('load data from', filename)
         df_list = pd.read_csv(filename)

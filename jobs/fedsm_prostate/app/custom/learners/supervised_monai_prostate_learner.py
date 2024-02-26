@@ -120,7 +120,7 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
             transforms.Normalize(mean=[constants.IMG_MEAN], std=[constants.IMG_STD])],
         )
         traindata = ImageTextContrastiveDataset(datalist_path=datalist_path, dataset_path=dataset_path,
-                                                imgtransform=transform)
+                                                imgtransform=transform, client_id = self.client_id)
         self.log_info(
             fl_ctx,
             f"Training Size: {len(traindata)}, Validation Size: {len()}",
