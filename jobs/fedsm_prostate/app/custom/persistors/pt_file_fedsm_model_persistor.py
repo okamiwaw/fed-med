@@ -17,8 +17,6 @@ import os
 from collections import OrderedDict
 
 import torch
-
-from medclip.modeling_medclip import MedCLIPModel
 from persistors.pt_fed_utils import PTModelPersistenceFormatManagerFedSM
 
 from nvflare.apis.event_type import EventType
@@ -65,7 +63,6 @@ class PTFileFedSMModelPersistor(PTFileModelPersistor):
         )
         self.client_ids = client_ids
         self.model_selector = model_selector
-        self.model = MedCLIPModel()
     def _initialize(self, fl_ctx: FLContext):
         self.log_info(fl_ctx, "FedSM model persistor initialized")
         super()._initialize(fl_ctx=fl_ctx)
