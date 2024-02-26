@@ -17,9 +17,7 @@
           "client_2",
           "client_3"
         ],
-        "model": {
-          "path": "medclip.modeling_medclip.MedCLIPModel"
-        },
+        "model":"mdedclip",
         "model_selector": {
           "path": "networks.vgg.vgg11",
           "args": {
