@@ -122,10 +122,7 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         traindata = ImageTextContrastiveDataset(datalist_path=datalist_path, dataset_path=dataset_path,
                                                 imgtransform=transform, client_id = self.client_id)
         print('the lenth of traindata:', len(traindata))
-        self.log_info(
-            fl_ctx,
-            f"Training Size: {len(traindata)}, Validation Size: {len()}",
-        )
+
         train_collate_fn = ImageTextContrastiveCollator()
 
         train_dataloader = DataLoader(traindata,
@@ -148,5 +145,9 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
                                      pin_memory=True,
                                      num_workers=1,
                                      )
+        self.log_info(
+            fl_ctx,
+            f"Training Size: {len(traindata)}, Validation Size: {len(val_data)}",
+        )
         self.train_loader = train_dataloader
         self.valid_loader = val_dataloader
