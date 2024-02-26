@@ -381,6 +381,7 @@ class ZeroShotImageDataset(Dataset):
                  datalist=['chexpert-5x200'],
                  class_names=None,
                  imgtransform=None,
+                 dataset_path = None
                  ) -> None:
         '''support data list in mimic-5x200, chexpert-5x200, rsna-balanced-test, covid-test
         args:
@@ -399,7 +400,7 @@ class ZeroShotImageDataset(Dataset):
             self.transform = imgtransform
 
         self.class_names = class_names
-
+        self.dataset_path = dataset_path
         # imgpath, subject_id, report, labels...(14 labels)
         df_list = []
         for data in datalist:
@@ -411,7 +412,7 @@ class ZeroShotImageDataset(Dataset):
 
     def __getitem__(self, index):
         row = self.df.iloc[index]
-        img = Image.open(row.imgpath)
+        img = Image.open(self.dataset_path + '/' + row.imgpath)
         img = self._pad_img(img)
         img = self.transform(img).unsqueeze(1)
         label = pd.DataFrame(row[self.class_names]).transpose()

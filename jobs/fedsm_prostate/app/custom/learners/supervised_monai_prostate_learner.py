@@ -136,7 +136,8 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
                                  )
         cls_prompts = generate_chexpert_class_prompts(n=10)
         val_data = ZeroShotImageDataset(['chexpert_5x200'],
-                                        class_names=constants.CHEXPERT_COMPETITION_TASKS)
+                                        class_names=constants.CHEXPERT_COMPETITION_TASKS,
+                                        dataset_path= dataset_path)
         val_collate_fn = ZeroShotImageCollator(cls_prompts=cls_prompts,
                                                mode='multiclass')
         val_dataloader = DataLoader(val_data,
@@ -148,7 +149,3 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
                                      )
         self.train_loader = train_dataloader
         self.valid_loader = val_dataloader
-
-        # Set inferer and evaluation metric
-        self.inferer = SimpleInferer()
-        self.valid_metric = DiceMetric(include_background=False, reduction="mean", get_not_nans=False)

@@ -163,7 +163,7 @@ class SupervisedLearner(Learner):
             mode='multiclass',
         )
         scores = self.evaluator.evaluate()
-        metric = scores['auc']
+        metric = scores['acc']
         # tensorboard record id, add to record if provided
         if tb_id:
             self.writer.add_scalar(tb_id, metric, current_round)

@@ -128,7 +128,7 @@ class MedCLIPVisionModelViT(nn.Module):
 
 class MedCLIPModel(nn.Module):
     def __init__(self,
-        vision_cls=MedCLIPVisionModel,
+        vision_cls=MedCLIPVisionModelViT,
         checkpoint=None,
         vision_checkpoint=None,
         logit_scale_init_value=0.07,
