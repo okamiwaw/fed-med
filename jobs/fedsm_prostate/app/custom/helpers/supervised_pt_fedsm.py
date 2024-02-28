@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import torch
 
 from helpers.pt_fedsm import PTFedSMHelper
 
@@ -63,12 +63,11 @@ class SupervisedPTFedSMHelper(PTFedSMHelper):
             for i, data in enumerate(train_loader):
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-
                 loss_return = loss_model(**data)
                 loss = loss_return['loss_value']
                 loss.backward()
                 self.person_optimizer.step()
                 self.person_optimizer.zero_grad()
-
                 current_step = epoch_len * epoch_global + i
                 writer.add_scalar("train_loss_personalized", loss.item(), current_step)
+            torch.cuda.empty_cache()

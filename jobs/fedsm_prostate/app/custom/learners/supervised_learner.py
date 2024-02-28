@@ -144,7 +144,7 @@ class SupervisedLearner(Learner):
                 current_step = epoch_len * epoch_global + i
                 progress_bar.set_postfix({"loss": loss.item()})
                 self.writer.add_scalar("train_loss", loss.item(), current_step)
-
+            torch.cuda.empty_cache()
     def local_valid(
         self,
         model,
@@ -171,6 +171,7 @@ class SupervisedLearner(Learner):
         # tensorboard record id, add to record if provided
         if tb_id:
             self.writer.add_scalar(tb_id, metric, current_round)
+        torch.cuda.empty_cache()
         return metric
 
     def train(

@@ -141,10 +141,10 @@ class PTFedSMHelper(object):
                 loss.backward()
                 current_step = epoch_len * epoch_global + i
                 writer.add_scalar("train_loss_selector", loss.item(), current_step)
-            # Full batch training, 1 step per epoch
-            self.select_optimizer.step()
-            self.select_optimizer.zero_grad()
-
+                # Full batch training, 1 step per epoch
+                self.select_optimizer.step()
+                self.select_optimizer.zero_grad()
+            torch.cuda.empty_cache()
     def local_valid_select(
         self,
         valid_loader,
