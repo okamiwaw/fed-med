@@ -134,13 +134,13 @@ class SupervisedLearner(Learner):
             )
             progress_bar = tqdm(enumerate(train_loader), total=epoch_len, leave=True)
             for i, batch_data in progress_bar:
+                self.optimizer.zero_grad()
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
                 loss_return = loss_model(**batch_data)
                 loss = loss_return['loss_value']
                 loss.backward()
                 self.optimizer.step()
-                self.optimizer.zero_grad()
                 current_step = epoch_len * epoch_global + i
                 progress_bar.set_postfix({"loss": loss.item()})
                 self.writer.add_scalar("train_loss", loss.item(), current_step)
