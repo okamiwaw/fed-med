@@ -30,7 +30,6 @@ torch.manual_seed(seed)
 torch.cuda.manual_seed(seed)
 os.environ['PYTHONASHSEED'] = str(seed)
 os.environ['TOKENIZERS_PARALLELISM'] = 'false'
-
 transform = transforms.Compose([
     transforms.RandomHorizontalFlip(0.5),
     transforms.ColorJitter(0.2, 0.2),
