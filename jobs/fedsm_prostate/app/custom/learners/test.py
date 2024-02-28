@@ -49,6 +49,7 @@ trainloader = DataLoader(traindata,
                          pin_memory=True,
                          num_workers=0,
                          )
+
 cls_prompts = generate_chexpert_class_prompts(n=10)
 val_data = ZeroShotImageDataset(['chexpert_5x200'],
     class_names=constants.CHEXPERT_COMPETITION_TASKS,

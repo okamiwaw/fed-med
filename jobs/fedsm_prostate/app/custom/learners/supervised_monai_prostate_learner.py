@@ -108,7 +108,7 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         self.model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.criterion = DiceLoss(sigmoid=True)
-        
+
         seed = 42
         random.seed(seed)
         np.random.seed(seed)
