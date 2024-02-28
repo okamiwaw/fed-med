@@ -19,10 +19,17 @@ from medclip.prompts import generate_class_prompts, generate_chexpert_class_prom
 from networks.vgg import vgg11
 import torch.optim as optim
 
-datalist_path = "/root/autodl-tmp/fed-med/data/data_list"
-dataset_path =  "/root/autodl-tmp/fed-med/data/data_set"
+datalist_path = "D:\\Codes\\ML\\fed-med\\data\\data_list"
+dataset_path = "D:\\Codes\\ML\\fed-med\\data\\data_set"
 # Get datalist json
 
+seed = 42
+random.seed(seed)
+np.random.seed(seed)
+torch.manual_seed(seed)
+torch.cuda.manual_seed(seed)
+os.environ['PYTHONASHSEED'] = str(seed)
+os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 
 transform = transforms.Compose([
     transforms.RandomHorizontalFlip(0.5),
@@ -33,10 +40,10 @@ transform = transforms.Compose([
     transforms.ToTensor(),
     transforms.Normalize(mean=[constants.IMG_MEAN], std=[constants.IMG_STD])],
 )
-traindata = ImageTextContrastiveDataset(datalist_path= datalist_path, dataset_path= dataset_path,imgtransform=transform, client_id= "client_1")
+traindata = ImageTextContrastiveDataset(datalist_path= datalist_path, dataset_path= dataset_path,imgtransform=transform, client_id="client_1")
 train_collate_fn = ImageTextContrastiveCollator()
 trainloader = DataLoader(traindata,
-                         batch_size=10,
+                         batch_size=20,
                          collate_fn=train_collate_fn,
                          shuffle=True,
                          pin_memory=True,
@@ -64,8 +71,8 @@ select_optimizer = optim.Adam(
             select_model.parameters(), lr=1e-3
         )
 epochs = 10
-model = MedCLIPModel().to(device)
-optimizer = optim.Adam(model.parameters(), lr= 1e-3)
+model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(device)
+optimizer = optim.Adam(model.parameters(), lr=  2e-5)
 
 ## select_model training ##
 # def local_train_select(train_loader, select_label, current_round):
@@ -91,25 +98,25 @@ optimizer = optim.Adam(model.parameters(), lr= 1e-3)
 #
 # local_train_select(trainloader, 2, 1)
 
-## local training ##
-# def local_train(
-#         train_loader,
-# ):
-#     for epoch in range(epochs):
-#         loss_model = ImageTextContrastiveLoss(model).to(device)
-#         loss_model.train()
-#         epoch_len = len(train_loader)
-#         progress_bar = tqdm(enumerate(train_loader), total=epoch_len, desc=f"Epoch {epoch} / {epochs}", leave=True)
-#         for i, batch_data in progress_bar:
-#             loss_return = loss_model(**batch_data)
-#             loss = loss_return['loss_value']
-#             loss.backward()
-#             optimizer.step()
-#             optimizer.zero_grad()
-#             progress_bar.set_postfix({"loss": loss.item()})
-# local_train(trainloader)
+# local training ##
+def local_train(
+        train_loader,
+):
+    for epoch in range(epochs):
+        loss_model = ImageTextContrastiveLoss(model).to(device)
+        loss_model.train()
+        epoch_len = len(train_loader)
+        progress_bar = tqdm(enumerate(train_loader), total=epoch_len, desc=f"Epoch {epoch} / {epochs}", leave=True)
+        for i, batch_data in progress_bar:
+            loss_return = loss_model(**batch_data)
+            loss = loss_return['loss_value']
+            loss.backward()
+            optimizer.step()
+            optimizer.zero_grad()
+            progress_bar.set_postfix({"loss": loss.item()})
+local_train(trainloader)
 
-##validate process ##
+#validate process ##
 # def local_valid(
 #         model,
 #         valid_loader,

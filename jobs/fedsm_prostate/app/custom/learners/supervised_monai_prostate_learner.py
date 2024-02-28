@@ -101,7 +101,6 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
 
         # Get the config_info
         self.lr = self.config_info["learning_rate"]
-        cache_rate = self.config_info["cache_dataset"]
         dataset_path = self.config_info["dataset_base_dir"]
         datalist_path = self.config_info["datalist_json_path"]
         # Set the training-related context
@@ -109,6 +108,14 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         self.model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(self.device)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.criterion = DiceLoss(sigmoid=True)
+        
+        seed = 42
+        random.seed(seed)
+        np.random.seed(seed)
+        torch.manual_seed(seed)
+        torch.cuda.manual_seed(seed)
+        os.environ['PYTHONASHSEED'] = str(seed)
+        os.environ['TOKENIZERS_PARALLELISM'] = 'false'
 
         transform = transforms.Compose([
             transforms.RandomHorizontalFlip(0.5),
@@ -121,12 +128,11 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         )
         traindata = ImageTextContrastiveDataset(datalist_path=datalist_path, dataset_path=dataset_path,
                                                 imgtransform=transform, client_id = self.client_id)
-        print('the lenth of traindata:', len(traindata))
 
         train_collate_fn = ImageTextContrastiveCollator()
 
         train_dataloader = DataLoader(traindata,
-                                 batch_size=10,
+                                 batch_size=100,
                                  collate_fn=train_collate_fn,
                                  shuffle=True,
                                  pin_memory=True,
@@ -139,7 +145,7 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         val_collate_fn = ZeroShotImageCollator(cls_prompts=cls_prompts,
                                                mode='multiclass')
         val_dataloader = DataLoader(val_data,
-                                     batch_size=20,
+                                     batch_size=50,
                                      collate_fn=val_collate_fn,
                                      shuffle=False,
                                      pin_memory=True,
