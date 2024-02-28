@@ -3,6 +3,6 @@
   "learning_rate_select": 2e-5,
   "cache_dataset": 1.0,
   "select_num_classes": 3,
-  "datalist_json_path": "/root/autodl-tmp/fed-med/data/data_list",
-  "dataset_base_dir": "/root/autodl-tmp/fed-med/data/data_set"
+  "datalist_json_path": "/home/ligong2/FL/fed-med/data/data_list",
+  "dataset_base_dir": "/home/ligong2/FL/fed-med/data/data_set"
 }
