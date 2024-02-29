@@ -136,7 +136,7 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
                                  collate_fn=train_collate_fn,
                                  shuffle=True,
                                  pin_memory=True,
-                                 num_workers=1,
+                                 num_workers=0,
                                  )
         cls_prompts = generate_chexpert_class_prompts(n=10)
         val_data = ZeroShotImageDataset(['chexpert_5x200'],
@@ -149,7 +149,7 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
                                      collate_fn=val_collate_fn,
                                      shuffle=False,
                                      pin_memory=True,
-                                     num_workers=1,
+                                     num_workers=0,
                                      )
         self.log_info(
             fl_ctx,
