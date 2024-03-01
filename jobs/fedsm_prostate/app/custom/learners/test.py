@@ -71,6 +71,9 @@ select_optimizer = optim.Adam(
             select_model.parameters(), lr=1e-3
         )
 epochs = 10
+before = torch.cuda.memory_allocated()
+print(f"before {before / 1024 ** 2:.2f} MB of GPU memory.")
+
 model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(device)
 optimizer = optim.Adam(model.parameters(), lr=  2e-5)
 
@@ -114,6 +117,12 @@ def local_train(
             optimizer.step()
             optimizer.zero_grad()
             progress_bar.set_postfix({"loss": loss.item()})
+            # 在加载模型后记录显存使用情况
+            after = torch.cuda.memory_allocated()
+            # 计算模型占用的显存大小
+            model_memory = after - before
+            print(f"The model occupies {model_memory / 1024 ** 2:.2f} MB of GPU memory.")
+            torch.cuda.empty_cache()
 local_train(trainloader)
 
 #validate process ##

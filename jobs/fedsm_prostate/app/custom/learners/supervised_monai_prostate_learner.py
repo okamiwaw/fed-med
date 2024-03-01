@@ -132,11 +132,11 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         train_collate_fn = ImageTextContrastiveCollator()
 
         train_dataloader = DataLoader(traindata,
-                                 batch_size=50,
+                                 batch_size=20,
                                  collate_fn=train_collate_fn,
                                  shuffle=True,
                                  pin_memory=True,
-                                 num_workers=0,
+                                 num_workers=1,
                                  )
         cls_prompts = generate_chexpert_class_prompts(n=10)
         val_data = ZeroShotImageDataset(['chexpert_5x200'],
@@ -145,11 +145,11 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         val_collate_fn = ZeroShotImageCollator(cls_prompts=cls_prompts,
                                                mode='multiclass')
         val_dataloader = DataLoader(val_data,
-                                     batch_size=50,
+                                     batch_size=20,
                                      collate_fn=val_collate_fn,
                                      shuffle=False,
                                      pin_memory=True,
-                                     num_workers=0,
+                                     num_workers=1,
                                      )
         self.log_info(
             fl_ctx,
