@@ -32,11 +32,11 @@ from nvflare.app_common.app_constant import AppConstants, ValidateType
 
 class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
     def __init__(
-        self,
-        train_config_filename,
-        aggregation_epochs: int = 1,
-        fedsm_select_epochs: int = 1,
-        train_task_name: str = AppConstants.TASK_TRAIN,
+            self,
+            train_config_filename,
+            aggregation_epochs: int = 1,
+            fedsm_select_epochs: int = 1,
+            train_task_name: str = AppConstants.TASK_TRAIN,
     ):
         """Trainer for prostate segmentation task. It inherits from MONAI trainer.
 
@@ -71,7 +71,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         # personalized and selector model training epoch
         # personalized model same as global model
         # selector model can be different from the other two task models
-        fedsm_person_model =self.model
+        fedsm_person_model = self.model
         fedsm_select_model = vgg11(
             num_classes=self.config_info["select_num_classes"],
         ).to(self.device)
@@ -120,7 +120,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
                 continue
             if is_bf:
                 diff = end_model[name].to(torch.bfloat16) - torch.from_numpy(initial_model[name]).to(torch.bfloat16)
-                model_diff[name] = diff.cpu().numpy()
+                model_diff[name] = diff.to(dtype=float).cpu().numpy()
             else:
                 model_diff[name] = np.subtract(end_model[name].cpu().numpy(), initial_model[name], dtype=np.float32)
             if np.any(np.isnan(model_diff[name])):
@@ -129,10 +129,10 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         return model_diff
 
     def train(
-        self,
-        shareable: Shareable,
-        fl_ctx: FLContext,
-        abort_signal: Signal,
+            self,
+            shareable: Shareable,
+            fl_ctx: FLContext,
+            abort_signal: Signal,
     ) -> Shareable:
         """Training task pipeline for FedSM
         Get global/client/selector model weights (potentially with HE)
