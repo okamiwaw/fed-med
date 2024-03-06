@@ -113,13 +113,16 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             raise ValueError(f"No global weights loaded! Received weight dict is {global_weights}")
         return local_var_dict
 
-    def compute_model_diff(self, initial_model: dict, end_model: dict, fl_ctx: FLContext):
+    def compute_model_diff(self, initial_model: dict, end_model: dict, fl_ctx: FLContext, is_bf):
         model_diff = {}
         for name in initial_model:
             if name not in end_model:
                 continue
-            diff = end_model[name].cpu().to(torch.bfloat16) - initial_model[name].cpu().to(torch.bfloat16)
-            model_diff[name] = diff.numpy() 
+            if is_bf:
+                diff = end_model[name].to(torch.bfloat16) - initial_model[name].to(torch.bfloat16)
+                model_diff[name] = diff.numpy()
+            else:
+                model_diff[name] = np.subtract(end_model[name].cpu().numpy(), initial_model[name], dtype=np.float32)
             if np.any(np.isnan(model_diff[name])):
                 self.system_panic(f"{name} weights became NaN...", fl_ctx)
                 return make_reply(ReturnCode.EXECUTION_EXCEPTION)
@@ -208,13 +211,13 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             return make_reply(ReturnCode.TASK_ABORTED)
         # compute delta models, initial models has the primary key set
         local_weights = self.model.state_dict()
-        model_diff_global = self.compute_model_diff(global_weights, local_weights, fl_ctx)
+        model_diff_global = self.compute_model_diff(global_weights, local_weights, fl_ctx, True)
         local_weights = self.fedsm_helper.person_model.state_dict()
         model_person = local_weights
         for name in model_person:
             model_person[name] = model_person[name].cpu().numpy()
         local_weights = self.fedsm_helper.select_model.state_dict()
-        model_diff_select = self.compute_model_diff(select_weights, local_weights, fl_ctx)
+        model_diff_select = self.compute_model_diff(select_weights, local_weights, fl_ctx, False)
         # directly return the optimizer parameters
         optim_weights = self.fedsm_helper.select_optimizer.state_dict().get("state")
         exp_avg = {}
