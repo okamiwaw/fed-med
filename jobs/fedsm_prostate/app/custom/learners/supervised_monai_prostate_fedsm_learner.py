@@ -15,6 +15,7 @@
 import numpy as np
 import torch
 import torch.optim as optim
+import torch.nn.utils.prune as prune
 from helpers.supervised_pt_fedsm import SupervisedPTFedSMHelper
 from learners.supervised_monai_prostate_learner import SupervisedMonaiProstateLearner
 from monai.losses import DiceLoss
@@ -204,7 +205,6 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         )
         if abort_signal.triggered:
             return make_reply(ReturnCode.TASK_ABORTED)
-
         # compute delta models, initial models has the primary key set
         local_weights = self.model.state_dict()
         model_diff_global = self.compute_model_diff(global_weights, local_weights, fl_ctx)
@@ -218,9 +218,9 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         optim_weights = self.fedsm_helper.select_optimizer.state_dict().get("state")
         exp_avg = {}
         exp_avg_sq = {}
-        # for name in optim_weights:
-        #     exp_avg[str(name)] = optim_weights[name]["exp_avg"].cpu().numpy()
-        #     exp_avg_sq[str(name)] = optim_weights[name]["exp_avg_sq"].cpu().numpy()
+        for name in optim_weights:
+            exp_avg[str(name)] = optim_weights[name]["exp_avg"].cpu().numpy()
+            exp_avg_sq[str(name)] = optim_weights[name]["exp_avg_sq"].cpu().numpy()
 
         # build the shareable
         dxo_dict = {

@@ -17,7 +17,7 @@ from abc import abstractmethod
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
-
+from torch.cuda.amp import autocast
 from nvflare.apis.dxo import DXO, DataKind, MetaKey, from_shareable
 from nvflare.apis.fl_constant import FLContextKey, ReturnCode
 from nvflare.apis.fl_context import FLContext
@@ -137,14 +137,15 @@ class SupervisedLearner(Learner):
                 self.optimizer.zero_grad()
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                loss_return = loss_model(**batch_data)
-                loss = loss_return['loss_value']
-                loss.backward()
-                self.optimizer.step()
+                batch_data = batch_data.to(self.device).half()
+                with autocast():
+                    loss_return = loss_model(**batch_data)
+                    loss = loss_return['loss_value']
+                    loss.backward()
+                    self.optimizer.step()
                 current_step = epoch_len * epoch_global + i
                 progress_bar.set_postfix({"loss": loss.item()})
                 self.writer.add_scalar("train_loss", loss.item(), current_step)
-            torch.cuda.empty_cache()
     def local_valid(
         self,
         model,
