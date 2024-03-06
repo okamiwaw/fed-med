@@ -215,7 +215,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         local_weights = self.fedsm_helper.person_model.state_dict()
         model_person = local_weights
         for name in model_person:
-            model_person[name] = model_person[name].cpu().numpy()
+            model_person[name] = model_person[name].to(dtype=float).cpu().numpy()
         local_weights = self.fedsm_helper.select_model.state_dict()
         model_diff_select = self.compute_model_diff(select_weights, local_weights, fl_ctx, False)
         # directly return the optimizer parameters
