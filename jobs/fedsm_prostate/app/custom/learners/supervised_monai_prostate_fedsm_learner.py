@@ -119,7 +119,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             if name not in end_model:
                 continue
             if is_bf:
-                diff = end_model[name].to(torch.bfloat16) - initial_model[name].to(torch.bfloat16)
+                diff = end_model[name].to(torch.bfloat16) - torch.from_numpy(initial_model[name]).to(torch.bfloat16)
                 model_diff[name] = diff.numpy()
             else:
                 model_diff[name] = np.subtract(end_model[name].cpu().numpy(), initial_model[name], dtype=np.float32)
