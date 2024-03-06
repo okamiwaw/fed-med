@@ -7,6 +7,7 @@ import torch
 from sklearn.preprocessing import OrdinalEncoder
 from sklearn.metrics import roc_auc_score, average_precision_score
 from sklearn.metrics import confusion_matrix, classification_report
+from torch.cpu.amp import autocast
 
 from tqdm import tqdm
 
@@ -37,8 +38,10 @@ class Evaluator:
         label_list = []
         for data in tqdm(eval_dataloader, desc='Evaluation'):
             with torch.no_grad():
-                outputs = self.clf(**data)
-                pred = outputs['logits']
+                data = data.half()
+                with autocast():
+                    outputs = self.clf(**data)
+                    pred = outputs['logits']
             pred_list.append(pred)
             label_list.append(data['labels'])
         

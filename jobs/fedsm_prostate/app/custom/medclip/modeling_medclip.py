@@ -138,7 +138,9 @@ class MedCLIPModel(nn.Module):
         assert vision_cls in [MedCLIPVisionModel, MedCLIPVisionModelViT], 'vision_cls should be one of [MedCLIPVisionModel, MedCLIPVisionModelViT]'
 
         self.vision_model = vision_cls(checkpoint=vision_checkpoint)
+        self.vision_model = self.vision_model.half()
         self.text_model = MedCLIPTextModel(proj_bias=False)
+        self.text_model = self.text_model.half()
 
         # learnable temperature for contrastive loss
         self.logit_scale = nn.Parameter(torch.log(torch.tensor(1/logit_scale_init_value)))
