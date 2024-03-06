@@ -124,7 +124,7 @@ class SupervisedLearner(Learner):
         for epoch in range(self.aggregation_epochs):
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
-            loss_model = ImageTextContrastiveLoss(self.model).to(self.device)
+            loss_model = ImageTextContrastiveLoss(self.model).to(self.device).to(dtype=torch.bfloat16)
             loss_model.train()
             epoch_len = len(train_loader)
             epoch_global = current_round * self.aggregation_epochs + epoch
