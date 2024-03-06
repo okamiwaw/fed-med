@@ -14,6 +14,7 @@
 
 from collections import OrderedDict
 
+import torch
 from nvflare.apis.dxo import MetaKey
 from nvflare.app_common.abstract.model import ModelLearnableKey, make_model_learnable
 from nvflare.app_common.app_constant import ModelFormat
@@ -72,15 +73,15 @@ class PTModelPersistenceFormatManagerFedSM(object):
         for model_id in self.model_set.keys():
             weights = {}
             var_dict = self.model_set[model_id]
+
             for k, v in var_dict.items():
                 if exclude_vars and exclude_vars.search(k):
                     continue
-
                 is_processed = processed_vars.get(k, False)
-                if is_processed:
+                if is_processed or model_id == "global_weights":
                     weights[k] = v
                 else:
-                    weights[k] = v.cuda().numpy()
+                    weights[k] = v.cpu().numpy()
             model_set[model_id] = make_model_learnable(weights, self.meta)
         model_set = make_model_learnable(model_set, self.meta)
         return model_set
