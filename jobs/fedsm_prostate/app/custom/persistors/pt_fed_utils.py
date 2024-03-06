@@ -73,12 +73,11 @@ class PTModelPersistenceFormatManagerFedSM(object):
         for model_id in self.model_set.keys():
             weights = {}
             var_dict = self.model_set[model_id]
-
             for k, v in var_dict.items():
                 if exclude_vars and exclude_vars.search(k):
                     continue
                 is_processed = processed_vars.get(k, False)
-                if is_processed or model_id == "global_weights":
+                if is_processed or v.dtype == torch.bfloat16:
                     weights[k] = v
                 else:
                     weights[k] = v.cpu().numpy()
