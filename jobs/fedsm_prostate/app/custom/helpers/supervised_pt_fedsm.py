@@ -56,14 +56,17 @@ class SupervisedPTFedSMHelper(PTFedSMHelper):
         for epoch in range(self.person_model_epochs):
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
-            loss_model = ImageTextContrastiveLoss(self.person_model).to(self.device)
+            loss_model = ImageTextContrastiveLoss(self.model).to(self.device).to(dtype=torch.bfloat16)
             loss_model.train()
             epoch_len = len(train_loader)
             epoch_global = current_round * self.person_model_epochs + epoch
-            for i, data in enumerate(train_loader):
+            for i, batch_data in enumerate(train_loader):
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                loss_return = loss_model(**data)
+                for key, value in batch_data.items():
+                    if key != 'input_ids' and key != 'aug_input_ids':
+                        batch_data[key] = value.to(dtype=torch.bfloat16)
+                loss_return = loss_model(**batch_data)
                 loss = loss_return['loss_value']
                 loss.backward()
                 self.person_optimizer.step()
