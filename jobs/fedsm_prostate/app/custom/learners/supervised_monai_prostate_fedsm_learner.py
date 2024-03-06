@@ -218,9 +218,9 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         optim_weights = self.fedsm_helper.select_optimizer.state_dict().get("state")
         exp_avg = {}
         exp_avg_sq = {}
-        for name in optim_weights:
-            exp_avg[str(name)] = optim_weights[name]["exp_avg"].cpu().numpy()
-            exp_avg_sq[str(name)] = optim_weights[name]["exp_avg_sq"].cpu().numpy()
+        # for name in optim_weights:
+        #     exp_avg[str(name)] = optim_weights[name]["exp_avg"].cpu().numpy()
+        #     exp_avg_sq[str(name)] = optim_weights[name]["exp_avg_sq"].cpu().numpy()
 
         # build the shareable
         dxo_dict = {
