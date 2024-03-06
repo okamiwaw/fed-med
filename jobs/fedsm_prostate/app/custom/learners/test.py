@@ -72,7 +72,7 @@ select_optimizer = optim.Adam(
         )
 epochs = 10
 
-model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(device)
+model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(device).to(dtype=torch.bfloat16)
 optimizer = optim.Adam(model.parameters(), lr=  2e-5)
 
 ## select_model training ##
@@ -109,18 +109,15 @@ def local_train(
         epoch_len = len(train_loader)
         progress_bar = tqdm(enumerate(train_loader), total=epoch_len, desc=f"Epoch {epoch} / {epochs}", leave=True)
         for i, batch_data in progress_bar:
+            for key, value in batch_data.items():
+                if key != 'input_ids' and key != 'aug_input_ids':
+                    batch_data[key] = value.to(dtype=torch.bfloat16)
             loss_return = loss_model(**batch_data)
             loss = loss_return['loss_value']
             loss.backward()
             optimizer.step()
             optimizer.zero_grad()
             progress_bar.set_postfix({"loss": loss.item()})
-            # 在加载模型后记录显存使用情况
-            after = torch.cuda.memory_allocated()
-            # 计算模型占用的显存大小
-            model_memory = after - before
-            print(f"The model occupies {model_memory / 1024 ** 2:.2f} MB of GPU memory.")
-            torch.cuda.empty_cache()
 local_train(trainloader)
 
 #validate process ##

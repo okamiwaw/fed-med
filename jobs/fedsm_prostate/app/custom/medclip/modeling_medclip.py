@@ -130,7 +130,7 @@ class MedCLIPModel(nn.Module):
     def __init__(self,
         vision_cls=MedCLIPVisionModelViT,
         checkpoint=None,
-        vision_checkpoint=None,
+        vision_checkpoint= None,
         logit_scale_init_value=0.07,
         ) -> None:
         super().__init__()
@@ -138,7 +138,6 @@ class MedCLIPModel(nn.Module):
         assert vision_cls in [MedCLIPVisionModel, MedCLIPVisionModelViT], 'vision_cls should be one of [MedCLIPVisionModel, MedCLIPVisionModelViT]'
 
         self.vision_model = vision_cls(checkpoint=vision_checkpoint)
-
         self.text_model = MedCLIPTextModel(proj_bias=False)
 
 

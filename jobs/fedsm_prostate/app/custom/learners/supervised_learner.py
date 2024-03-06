@@ -137,7 +137,9 @@ class SupervisedLearner(Learner):
                 self.optimizer.zero_grad()
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                batch_data = batch_data.to(self.device)
+                for key, value in batch_data.items():
+                    if key != 'input_ids' and key != 'aug_input_ids':
+                        batch_data[key] = value.to(dtype=torch.bfloat16)
                 loss_return = loss_model(**batch_data)
                 loss = loss_return['loss_value']
                 loss.backward()

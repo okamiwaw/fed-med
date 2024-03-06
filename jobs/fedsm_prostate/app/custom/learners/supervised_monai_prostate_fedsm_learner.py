@@ -273,7 +273,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         if validate_type == ValidateType.BEFORE_TRAIN_VALIDATE:
             # perform valid before local train
             global_metric = self.local_valid(
-                self.model,
+                self.model.to(dtype=torch.float32),
                 self.valid_loader,
                 abort_signal,
                 tb_id="val_metric_global_model",
@@ -284,7 +284,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             self.log_info(fl_ctx, f"val_metric_global_model ({model_owner}): {global_metric:.4f}")
 
             person_metric = self.local_valid(
-                self.fedsm_helper.person_model,
+                self.fedsm_helper.person_model.to(dtype=torch.float32),
                 self.valid_loader,
                 abort_signal,
                 tb_id="val_metric_person_model",

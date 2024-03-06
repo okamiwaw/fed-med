@@ -98,7 +98,7 @@ class PTFileFedSMModelPersistor(PTFileModelPersistor):
         # selector: selector model
         # global: global model
         # {client_id}: personalized models with same structure as global model
-        self.model = self.model
+        self.model = self.model.to(dtype=torch.bfloat16)
         self.model_set_fedsm = {}
         # initialize all models
         self.model_set_fedsm["select_weights"] = copy.deepcopy(self.model_selector)
