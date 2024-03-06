@@ -38,7 +38,7 @@ class Evaluator:
         label_list = []
         for data in tqdm(eval_dataloader, desc='Evaluation'):
             with torch.no_grad():
-                data = data.half()
+                data = data.to(dtype=torch.float16)
                 with autocast():
                     outputs = self.clf(**data)
                     pred = outputs['logits']

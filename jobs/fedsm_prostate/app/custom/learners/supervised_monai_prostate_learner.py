@@ -106,7 +106,6 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         # Set the training-related context
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         self.model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(self.device)
-        self.model = self.model.half()
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.criterion = DiceLoss(sigmoid=True)
 
