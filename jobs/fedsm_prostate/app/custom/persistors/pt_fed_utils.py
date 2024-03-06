@@ -80,7 +80,7 @@ class PTModelPersistenceFormatManagerFedSM(object):
                 if is_processed:
                     weights[k] = v
                 else:
-                    weights[k] = v.cpu().numpy()
+                    weights[k] = v.cuda().numpy()
             model_set[model_id] = make_model_learnable(weights, self.meta)
         model_set = make_model_learnable(model_set, self.meta)
         return model_set
