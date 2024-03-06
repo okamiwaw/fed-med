@@ -38,13 +38,11 @@ class Evaluator:
         label_list = []
         for data in tqdm(eval_dataloader, desc='Evaluation'):
             with torch.no_grad():
-                data = data.to(dtype=torch.float16)
-                with autocast():
-                    outputs = self.clf(**data)
-                    pred = outputs['logits']
+                data = data
+                outputs = self.clf(**data)
+                pred = outputs['logits']
             pred_list.append(pred)
             label_list.append(data['labels'])
-        
         pred_list = torch.cat(pred_list, 0)
         labels = torch.cat(label_list, 0).cpu().detach().numpy()
 

@@ -137,12 +137,11 @@ class SupervisedLearner(Learner):
                 self.optimizer.zero_grad()
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                batch_data = batch_data.to(self.device).to(dtype=torch.float16)
-                with autocast():
-                    loss_return = loss_model(**batch_data)
-                    loss = loss_return['loss_value']
-                    loss.backward()
-                    self.optimizer.step()
+                batch_data = batch_data.to(self.device)
+                loss_return = loss_model(**batch_data)
+                loss = loss_return['loss_value']
+                loss.backward()
+                self.optimizer.step()
                 current_step = epoch_len * epoch_global + i
                 progress_bar.set_postfix({"loss": loss.item()})
                 self.writer.add_scalar("train_loss", loss.item(), current_step)
