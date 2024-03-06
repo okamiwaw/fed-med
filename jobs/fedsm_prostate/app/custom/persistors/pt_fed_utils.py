@@ -77,7 +77,7 @@ class PTModelPersistenceFormatManagerFedSM(object):
                 if exclude_vars and exclude_vars.search(k):
                     continue
                 is_processed = processed_vars.get(k, False)
-                if is_processed or v.dtype == torch.bfloat16:
+                if is_processed:
                     weights[k] = v
                 else:
                     weights[k] = v.cpu().numpy()
