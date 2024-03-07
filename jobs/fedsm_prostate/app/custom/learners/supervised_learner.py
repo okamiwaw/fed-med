@@ -31,11 +31,12 @@ from medclip.losses import ImageTextContrastiveLoss
 from medclip.modeling_medclip import MedCLIPModel, PromptClassifier, MedCLIPVisionModel, MedCLIPVisionModelViT
 from medclip.evaluator import Evaluator
 
+
 class SupervisedLearner(Learner):
     def __init__(
-        self,
-        aggregation_epochs: int = 1,
-        train_task_name: str = AppConstants.TASK_TRAIN,
+            self,
+            aggregation_epochs: int = 1,
+            train_task_name: str = AppConstants.TASK_TRAIN,
     ):
         """Simple Supervised Trainer.
             This provides the basic functionality of a local learner: perform before-train validation on
@@ -108,11 +109,11 @@ class SupervisedLearner(Learner):
         pass
 
     def local_train(
-        self,
-        fl_ctx,
-        train_loader,
-        abort_signal: Signal,
-        current_round,
+            self,
+            fl_ctx,
+            train_loader,
+            abort_signal: Signal,
+            current_round,
     ):
         """Typical training logic
         Total local epochs: self.aggregation_epochs
@@ -147,13 +148,14 @@ class SupervisedLearner(Learner):
                 current_step = epoch_len * epoch_global + i
                 progress_bar.set_postfix({"loss": loss.item()})
                 self.writer.add_scalar("train_loss", loss.item(), current_step)
+
     def local_valid(
-        self,
-        model,
-        valid_loader,
-        abort_signal: Signal,
-        tb_id=None,
-        current_round=None,
+            self,
+            model,
+            valid_loader,
+            abort_signal: Signal,
+            tb_id=None,
+            current_round=None,
     ):
         """Typical validation logic
         Load data pairs from train_loader: image / label
@@ -162,10 +164,10 @@ class SupervisedLearner(Learner):
         Compute evaluation metric with self.valid_metric
         Add score to tensorboard record with specified id
         """
-        medclip_clf = PromptClassifier(model)
+        medclip_clf = PromptClassifier(model.to(dtype=float))
         evaluator = Evaluator(
             medclip_clf=medclip_clf,
-            eval_dataloader = valid_loader,
+            eval_dataloader=valid_loader,
             mode='multiclass',
         )
         scores = evaluator.evaluate()
@@ -177,10 +179,10 @@ class SupervisedLearner(Learner):
         return metric
 
     def train(
-        self,
-        shareable: Shareable,
-        fl_ctx: FLContext,
-        abort_signal: Signal,
+            self,
+            shareable: Shareable,
+            fl_ctx: FLContext,
+            abort_signal: Signal,
     ) -> Shareable:
         """Typical training task pipeline with potential HE functionality
         Get global model weights (potentially with HE)
