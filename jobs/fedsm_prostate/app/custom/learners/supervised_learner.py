@@ -164,7 +164,7 @@ class SupervisedLearner(Learner):
         Compute evaluation metric with self.valid_metric
         Add score to tensorboard record with specified id
         """
-        medclip_clf = PromptClassifier(model.to(dtype=float))
+        medclip_clf = PromptClassifier(model.to(dtype=torch.float32))
         evaluator = Evaluator(
             medclip_clf=medclip_clf,
             eval_dataloader=valid_loader,
