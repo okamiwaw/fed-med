@@ -32,11 +32,11 @@ from nvflare.app_common.app_constant import AppConstants, ValidateType
 
 class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
     def __init__(
-            self,
-            train_config_filename,
-            aggregation_epochs: int = 1,
-            fedsm_select_epochs: int = 1,
-            train_task_name: str = AppConstants.TASK_TRAIN,
+        self,
+        train_config_filename,
+        aggregation_epochs: int = 1,
+        fedsm_select_epochs: int = 1,
+        train_task_name: str = AppConstants.TASK_TRAIN,
     ):
         """Trainer for prostate segmentation task. It inherits from MONAI trainer.
 
@@ -71,7 +71,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         # personalized and selector model training epoch
         # personalized model same as global model
         # selector model can be different from the other two task models
-        fedsm_person_model = self.model
+        fedsm_person_model =self.model
         fedsm_select_model = vgg11(
             num_classes=self.config_info["select_num_classes"],
         ).to(self.device)
@@ -113,26 +113,22 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             raise ValueError(f"No global weights loaded! Received weight dict is {global_weights}")
         return local_var_dict
 
-    def compute_model_diff(self, initial_model: dict, end_model: dict, fl_ctx: FLContext, is_bf):
+    def compute_model_diff(self, initial_model: dict, end_model: dict, fl_ctx: FLContext):
         model_diff = {}
         for name in initial_model:
             if name not in end_model:
                 continue
-            if is_bf:
-                diff = end_model[name].to(torch.bfloat16) - torch.from_numpy(initial_model[name]).cuda().to(torch.bfloat16)
-                model_diff[name] = diff.to(dtype=float).cpu().numpy()
-            else:
-                model_diff[name] = np.subtract(end_model[name].cpu().numpy(), initial_model[name], dtype=np.float32)
+            model_diff[name] = np.subtract(end_model[name].cpu().numpy(), initial_model[name], dtype=np.float32)
             if np.any(np.isnan(model_diff[name])):
                 self.system_panic(f"{name} weights became NaN...", fl_ctx)
                 return make_reply(ReturnCode.EXECUTION_EXCEPTION)
         return model_diff
 
     def train(
-            self,
-            shareable: Shareable,
-            fl_ctx: FLContext,
-            abort_signal: Signal,
+        self,
+        shareable: Shareable,
+        fl_ctx: FLContext,
+        abort_signal: Signal,
     ) -> Shareable:
         """Training task pipeline for FedSM
         Get global/client/selector model weights (potentially with HE)
@@ -211,13 +207,13 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             return make_reply(ReturnCode.TASK_ABORTED)
         # compute delta models, initial models has the primary key set
         local_weights = self.model.state_dict()
-        model_diff_global = self.compute_model_diff(global_weights, local_weights, fl_ctx, True)
+        model_diff_global = self.compute_model_diff(global_weights, local_weights, fl_ctx)
         local_weights = self.fedsm_helper.person_model.state_dict()
         model_person = local_weights
         for name in model_person:
-            model_person[name] = model_person[name].to(dtype=float).cpu().numpy()
+            model_person[name] = model_person[name].cpu().numpy()
         local_weights = self.fedsm_helper.select_model.state_dict()
-        model_diff_select = self.compute_model_diff(select_weights, local_weights, fl_ctx, False)
+        model_diff_select = self.compute_model_diff(select_weights, local_weights, fl_ctx)
         # directly return the optimizer parameters
         optim_weights = self.fedsm_helper.select_optimizer.state_dict().get("state")
         exp_avg = {}
@@ -277,7 +273,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         if validate_type == ValidateType.BEFORE_TRAIN_VALIDATE:
             # perform valid before local train
             global_metric = self.local_valid(
-                self.model.to(dtype=torch.float32),
+                self.model,
                 self.valid_loader,
                 abort_signal,
                 tb_id="val_metric_global_model",
@@ -288,7 +284,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             self.log_info(fl_ctx, f"val_metric_global_model ({model_owner}): {global_metric:.4f}")
 
             person_metric = self.local_valid(
-                self.fedsm_helper.person_model.to(dtype=torch.float32),
+                self.fedsm_helper.person_model,
                 self.valid_loader,
                 abort_signal,
                 tb_id="val_metric_person_model",

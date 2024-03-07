@@ -105,7 +105,7 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         datalist_path = self.config_info["datalist_json_path"]
         # Set the training-related context
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-        self.model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(self.device).to(dtype=torch.bfloat16)
+        self.model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(self.device).to(dtype=torch.float16)
         self.optimizer = optim.Adam(self.model.parameters(), lr=self.lr)
         self.criterion = DiceLoss(sigmoid=True)
 

@@ -72,7 +72,7 @@ select_optimizer = optim.Adam(
         )
 epochs = 10
 
-model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(device).to(dtype=torch.bfloat16)
+model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(device).to(dtype=torch.float16)
 optimizer = optim.Adam(model.parameters(), lr=  2e-5)
 
 ## select_model training ##
@@ -111,7 +111,7 @@ def local_train(
         for i, batch_data in progress_bar:
             for key, value in batch_data.items():
                 if key != 'input_ids' and key != 'aug_input_ids':
-                    batch_data[key] = value.to(dtype=torch.bfloat16)
+                    batch_data[key] = value.to(dtype=torch.float16)
             loss_return = loss_model(**batch_data)
             loss = loss_return['loss_value']
             loss.backward()

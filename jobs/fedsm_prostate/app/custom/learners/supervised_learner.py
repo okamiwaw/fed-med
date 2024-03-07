@@ -124,7 +124,7 @@ class SupervisedLearner(Learner):
         for epoch in range(self.aggregation_epochs):
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
-            loss_model = ImageTextContrastiveLoss(self.model).to(self.device).to(dtype=torch.bfloat16)
+            loss_model = ImageTextContrastiveLoss(self.model).to(self.device).to(dtype=torch.float16)
             loss_model.train()
             epoch_len = len(train_loader)
             epoch_global = current_round * self.aggregation_epochs + epoch
@@ -139,7 +139,7 @@ class SupervisedLearner(Learner):
                     return make_reply(ReturnCode.TASK_ABORTED)
                 for key, value in batch_data.items():
                     if key != 'input_ids' and key != 'aug_input_ids':
-                        batch_data[key] = value.to(dtype=torch.bfloat16)
+                        batch_data[key] = value.to(dtype=torch.float16)
                 loss_return = loss_model(**batch_data)
                 loss = loss_return['loss_value']
                 loss.backward()
