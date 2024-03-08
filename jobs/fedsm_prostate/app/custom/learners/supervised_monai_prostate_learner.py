@@ -132,7 +132,7 @@ class SupervisedMonaiProstateLearner(SupervisedLearner):
         train_collate_fn = ImageTextContrastiveCollator()
 
         train_dataloader = DataLoader(traindata,
-                                 batch_size=100,
+                                 batch_size= 75,
                                  collate_fn=train_collate_fn,
                                  shuffle=True,
                                  pin_memory=True,
