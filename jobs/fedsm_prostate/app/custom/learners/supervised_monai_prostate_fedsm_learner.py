@@ -177,8 +177,6 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             #     local_optim_state_dict["state"][name]["exp_avg_sq"] = torch.as_tensor(global_exp_avg_sq[str(name)])
             # self.fedsm_helper.select_optimizer.load_state_dict(local_optim_state_dict)
         # move the model to cuda
-        self.model().to(self.device)
-        self.fedsm_helper.model().to(self.device)
         # local trainings for three models
         epoch_len = len(self.train_loader)
         self.log_info(fl_ctx, f"Local steps per epoch: {epoch_len}")
@@ -190,7 +188,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             current_round=current_round,
         )
         torch.cuda.empty_cache()
-        self.model().to('cpu')
+
         if abort_signal.triggered:
             return make_reply(ReturnCode.TASK_ABORTED)
         # local train personalized model
@@ -201,7 +199,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             current_round=current_round,
         )
         torch.cuda.empty_cache()
-        self.fedsm_helper.model().to('cpu')
+        
         if abort_signal.triggered:
             return make_reply(ReturnCode.TASK_ABORTED)
         # local train selector
