@@ -199,7 +199,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             current_round=current_round,
         )
         torch.cuda.empty_cache()
-        
+
         if abort_signal.triggered:
             return make_reply(ReturnCode.TASK_ABORTED)
         # local train selector
