@@ -43,7 +43,7 @@ transform = transforms.Compose([
 traindata = ImageTextContrastiveDataset(datalist_path= datalist_path, dataset_path= dataset_path,imgtransform=transform, client_id="client_1")
 train_collate_fn = ImageTextContrastiveCollator()
 trainloader = DataLoader(traindata,
-                         batch_size=20,
+                         batch_size=50,
                          collate_fn=train_collate_fn,
                          shuffle=True,
                          pin_memory=True,
@@ -101,16 +101,8 @@ optimizer = optim.Adam(model.parameters(), lr=  2e-5)
 # local_train_select(trainloader, 2, 1)
 
 # local training ##
-def model_size_in_bytes(dicts):
-    total_size = 0
-    for param in dicts.values():
-        # 计算单个参数的字节大小
-        param_size = param.element_size() * param.numel()
-        total_size += param_size
-    return total_size
 
-total_mb_person = model_size_in_bytes(model.state_dict()) / 1024 / 1024
-print(f"Person Model state_dict size: {total_mb_person:.2f} MB")
+
 def local_train(
         train_loader,
 ):
@@ -127,7 +119,6 @@ def local_train(
             scaler.scale(loss).backward()
             scaler.step(optimizer)
             scaler.update()
-
             progress_bar.set_postfix({"loss": loss.item()})
 local_train(trainloader)
 

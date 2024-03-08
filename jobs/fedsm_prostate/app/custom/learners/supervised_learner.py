@@ -17,7 +17,7 @@ from abc import abstractmethod
 import numpy as np
 import torch
 from torch.utils.tensorboard import SummaryWriter
-from torch.cuda.amp import autocast
+from torch.cuda.amp import autocast, GradScaler
 from nvflare.apis.dxo import DXO, DataKind, MetaKey, from_shareable
 from nvflare.apis.fl_constant import FLContextKey, ReturnCode
 from nvflare.apis.fl_context import FLContext
@@ -26,6 +26,7 @@ from nvflare.apis.signal import Signal
 from nvflare.app_common.abstract.learner_spec import Learner
 from nvflare.app_common.app_constant import AppConstants, ValidateType
 from tqdm import tqdm
+
 
 from medclip.losses import ImageTextContrastiveLoss
 from medclip.modeling_medclip import MedCLIPModel, PromptClassifier, MedCLIPVisionModel, MedCLIPVisionModelViT
@@ -125,6 +126,7 @@ class SupervisedLearner(Learner):
         for epoch in range(self.aggregation_epochs):
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
+            scaler = GradScaler()
             loss_model = ImageTextContrastiveLoss(self.model).to(self.device)
             loss_model.train()
             epoch_len = len(train_loader)
@@ -138,13 +140,12 @@ class SupervisedLearner(Learner):
                 self.optimizer.zero_grad()
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                # for key, value in batch_data.items():
-                #     if key != 'input_ids' and key != 'aug_input_ids':
-                #         batch_data[key] = value.to(dtype=torch.float16)
-                loss_return = loss_model(**batch_data)
-                loss = loss_return['loss_value']
-                loss.backward()
-                self.optimizer.step()
+                with autocast():
+                    loss_return = loss_model(**batch_data)
+                    loss = loss_return['loss_value']
+                scaler.scale(loss).backward()
+                scaler.step(self.optimizer)
+                scaler.update()
                 current_step = epoch_len * epoch_global + i
                 progress_bar.set_postfix({"loss": loss.item()})
                 self.writer.add_scalar("train_loss", loss.item(), current_step)
@@ -164,7 +165,7 @@ class SupervisedLearner(Learner):
         Compute evaluation metric with self.valid_metric
         Add score to tensorboard record with specified id
         """
-        medclip_clf = PromptClassifier(model.to(dtype=torch.float32))
+        medclip_clf = PromptClassifier(model)
         evaluator = Evaluator(
             medclip_clf=medclip_clf,
             eval_dataloader=valid_loader,

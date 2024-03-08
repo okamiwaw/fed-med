@@ -12,6 +12,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import torch
+from torch.cuda.amp import GradScaler, autocast
+from tqdm import tqdm
 
 from helpers.pt_fedsm import PTFedSMHelper
 
@@ -56,21 +58,22 @@ class SupervisedPTFedSMHelper(PTFedSMHelper):
         for epoch in range(self.person_model_epochs):
             if abort_signal.triggered:
                 return make_reply(ReturnCode.TASK_ABORTED)
+            scaler = GradScaler()
             loss_model = ImageTextContrastiveLoss(self.person_model).to(self.device)
             loss_model.train()
             epoch_len = len(train_loader)
             epoch_global = current_round * self.person_model_epochs + epoch
+            progress_bar = tqdm(enumerate(train_loader), total=epoch_len, leave=True)
             for i, batch_data in enumerate(train_loader):
+                self.person_optimizer.zero_grad()
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                # for key, value in batch_data.items():
-                #     if key != 'input_ids' and key != 'aug_input_ids':
-                #         batch_data[key] = value.to(dtype=torch.float16)
-                loss_return = loss_model(**batch_data)
-                loss = loss_return['loss_value']
-                loss.backward()
-                self.person_optimizer.step()
-                self.person_optimizer.zero_grad()
+                with autocast():
+                    loss_return = loss_model(**batch_data)
+                    loss = loss_return['loss_value']
+                scaler.scale(loss).backward()
+                scaler.step(self.person_optimizer)
+                scaler.update()
                 current_step = epoch_len * epoch_global + i
                 writer.add_scalar("train_loss_personalized", loss.item(), current_step)
             torch.cuda.empty_cache()
