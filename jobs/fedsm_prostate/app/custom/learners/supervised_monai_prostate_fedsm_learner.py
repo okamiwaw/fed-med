@@ -169,11 +169,11 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             global_exp_avg = dxo.data.get("select_exp_avg").data["weights"]
             global_exp_avg_sq = dxo.data.get("select_exp_avg_sq").data["weights"]
             # load parameters to optimizer
-            local_optim_state_dict = self.fedsm_helper.select_optimizer.state_dict()
-            for name in local_optim_state_dict["state"]:
-                local_optim_state_dict["state"][name]["exp_avg"] = torch.as_tensor(global_exp_avg[str(name)])
-                local_optim_state_dict["state"][name]["exp_avg_sq"] = torch.as_tensor(global_exp_avg_sq[str(name)])
-            self.fedsm_helper.select_optimizer.load_state_dict(local_optim_state_dict)
+            # local_optim_state_dict = self.fedsm_helper.select_optimizer.state_dict()
+            # for name in local_optim_state_dict["state"]:
+            #     local_optim_state_dict["state"][name]["exp_avg"] = torch.as_tensor(global_exp_avg[str(name)])
+            #     local_optim_state_dict["state"][name]["exp_avg_sq"] = torch.as_tensor(global_exp_avg_sq[str(name)])
+            # self.fedsm_helper.select_optimizer.load_state_dict(local_optim_state_dict)
 
         # local trainings for three models
         epoch_len = len(self.train_loader)
