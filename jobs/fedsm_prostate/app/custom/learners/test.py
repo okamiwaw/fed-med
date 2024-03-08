@@ -18,6 +18,7 @@ from medclip import constants
 from medclip.prompts import generate_class_prompts, generate_chexpert_class_prompts, generate_covid_class_prompts
 from networks.vgg import vgg11
 import torch.optim as optim
+from torch.cuda.amp import GradScaler, autocast
 
 datalist_path = "D:\\Codes\\ML\\fed-med\\data\\data_list"
 dataset_path = "D:\\Codes\\ML\\fed-med\\data\\data_set"
@@ -71,8 +72,8 @@ select_optimizer = optim.Adam(
             select_model.parameters(), lr=1e-3
         )
 epochs = 10
-
-model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(device).to(dtype=torch.float16)
+scaler = GradScaler()
+model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(device)
 optimizer = optim.Adam(model.parameters(), lr=  2e-5)
 
 ## select_model training ##
@@ -109,14 +110,14 @@ def local_train(
         epoch_len = len(train_loader)
         progress_bar = tqdm(enumerate(train_loader), total=epoch_len, desc=f"Epoch {epoch} / {epochs}", leave=True)
         for i, batch_data in progress_bar:
-            for key, value in batch_data.items():
-                if key != 'input_ids' and key != 'aug_input_ids':
-                    batch_data[key] = value.to(dtype=torch.float16)
-            loss_return = loss_model(**batch_data)
-            loss = loss_return['loss_value']
-            loss.backward()
-            optimizer.step()
             optimizer.zero_grad()
+            with autocast():
+                loss_return = loss_model(**batch_data)
+                loss = loss_return['loss_value']
+            scaler.scale(loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+
             progress_bar.set_postfix({"loss": loss.item()})
 local_train(trainloader)
 

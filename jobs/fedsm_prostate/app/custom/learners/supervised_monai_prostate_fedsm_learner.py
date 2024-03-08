@@ -125,6 +125,13 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
                 return make_reply(ReturnCode.EXECUTION_EXCEPTION)
         return model_diff
 
+    def model_size_in_bytes(dicts):
+        total_size = 0
+        for param in dicts.values():
+            # 计算单个参数的字节大小
+            param_size = param.element_size() * param.numel()
+            total_size += param_size
+        return total_size
     def train(
         self,
         shareable: Shareable,
@@ -222,7 +229,12 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         for name in optim_weights:
             exp_avg[str(name)] = optim_weights[name]["exp_avg"].cpu().numpy()
             exp_avg_sq[str(name)] = optim_weights[name]["exp_avg_sq"].cpu().numpy()
-
+        total_mb_person = self.model_size_in_bytes(model_person) / 1024 / 1024
+        print(f"Person Model state_dict size: {total_mb_person:.2f} MB")
+        total_mb_global = model_diff_global.nbytes
+        total_mb_select = model_diff_select.nbytes
+        print(f"model_diff_global size is: {total_mb_global:.2f} MB")
+        print(f"model_diff_select size is: {total_mb_select:.2f} MB")
         # build the shareable
         dxo_dict = {
             "global_weights": DXO(data_kind=DataKind.WEIGHT_DIFF, data=model_diff_global),
