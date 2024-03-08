@@ -21,6 +21,8 @@ from helpers.supervised_pt_fedsm import SupervisedPTFedSMHelper
 from learners.supervised_monai_prostate_learner import SupervisedMonaiProstateLearner
 from monai.losses import DiceLoss
 from monai.networks.nets.unet import UNet
+
+from medclip.modeling_medclip import MedCLIPModel, MedCLIPVisionModelViT
 from networks.vgg import vgg11
 
 from nvflare.apis.dxo import DXO, DataKind, MetaKey, from_shareable
@@ -33,11 +35,11 @@ from nvflare.app_common.app_constant import AppConstants, ValidateType
 
 class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
     def __init__(
-        self,
-        train_config_filename,
-        aggregation_epochs: int = 1,
-        fedsm_select_epochs: int = 1,
-        train_task_name: str = AppConstants.TASK_TRAIN,
+            self,
+            train_config_filename,
+            aggregation_epochs: int = 1,
+            fedsm_select_epochs: int = 1,
+            train_task_name: str = AppConstants.TASK_TRAIN,
     ):
         """Trainer for prostate segmentation task. It inherits from MONAI trainer.
 
@@ -72,7 +74,7 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         # personalized and selector model training epoch
         # personalized model same as global model
         # selector model can be different from the other two task models
-        fedsm_person_model =self.model
+        fedsm_person_model = MedCLIPModel(vision_cls=MedCLIPVisionModelViT).to(self.device)
         fedsm_select_model = vgg11(
             num_classes=self.config_info["select_num_classes"],
         ).to(self.device)
@@ -126,10 +128,10 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         return model_diff
 
     def train(
-        self,
-        shareable: Shareable,
-        fl_ctx: FLContext,
-        abort_signal: Signal,
+            self,
+            shareable: Shareable,
+            fl_ctx: FLContext,
+            abort_signal: Signal,
     ) -> Shareable:
         """Training task pipeline for FedSM
         Get global/client/selector model weights (potentially with HE)
@@ -174,7 +176,9 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             #     local_optim_state_dict["state"][name]["exp_avg"] = torch.as_tensor(global_exp_avg[str(name)])
             #     local_optim_state_dict["state"][name]["exp_avg_sq"] = torch.as_tensor(global_exp_avg_sq[str(name)])
             # self.fedsm_helper.select_optimizer.load_state_dict(local_optim_state_dict)
-
+        # move the model to cuda
+        self.model().to(self.device)
+        self.fedsm_helper.model().to(self.device)
         # local trainings for three models
         epoch_len = len(self.train_loader)
         self.log_info(fl_ctx, f"Local steps per epoch: {epoch_len}")
@@ -185,6 +189,8 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             abort_signal=abort_signal,
             current_round=current_round,
         )
+        torch.cuda.empty_cache()
+        self.model().to('cpu')
         if abort_signal.triggered:
             return make_reply(ReturnCode.TASK_ABORTED)
         # local train personalized model
@@ -194,6 +200,8 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
             writer=self.writer,
             current_round=current_round,
         )
+        torch.cuda.empty_cache()
+        self.fedsm_helper.model().to('cpu')
         if abort_signal.triggered:
             return make_reply(ReturnCode.TASK_ABORTED)
         # local train selector
