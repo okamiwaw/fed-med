@@ -50,19 +50,19 @@ trainloader = DataLoader(traindata,
                          num_workers=0,
                          )
 
-cls_prompts = generate_chexpert_class_prompts(n=10)
-val_data = ZeroShotImageDataset(['chexpert_5x200'],
-    class_names=constants.CHEXPERT_COMPETITION_TASKS,
-    dataset_path= dataset_path)
-val_collate_fn = ZeroShotImageCollator(cls_prompts=cls_prompts,
-    mode='multiclass')
-eval_dataloader = DataLoader(val_data,
-    batch_size= 20,
-    collate_fn=val_collate_fn,
-    shuffle=False,
-    pin_memory=True,
-    num_workers=0,
-    )
+# cls_prompts = generate_chexpert_class_prompts(n=10)
+# val_data = ZeroShotImageDataset(['chexpert_5x200'],
+#     class_names=constants.CHEXPERT_COMPETITION_TASKS,
+#     dataset_path= dataset_path)
+# val_collate_fn = ZeroShotImageCollator(cls_prompts=cls_prompts,
+#     mode='multiclass')
+# eval_dataloader = DataLoader(val_data,
+#     batch_size= 20,
+#     collate_fn=val_collate_fn,
+#     shuffle=False,
+#     pin_memory=True,
+#     num_workers=0,
+#     )
 device = "cuda:0"
 select_model = vgg11(
             num_classes=3,
@@ -101,6 +101,16 @@ optimizer = optim.Adam(model.parameters(), lr=  2e-5)
 # local_train_select(trainloader, 2, 1)
 
 # local training ##
+def model_size_in_bytes(dicts):
+    total_size = 0
+    for param in dicts.values():
+        # 计算单个参数的字节大小
+        param_size = param.element_size() * param.numel()
+        total_size += param_size
+    return total_size
+
+total_mb_person = model_size_in_bytes(model.state_dict()) / 1024 / 1024
+print(f"Person Model state_dict size: {total_mb_person:.2f} MB")
 def local_train(
         train_loader,
 ):
