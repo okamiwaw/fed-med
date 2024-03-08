@@ -62,13 +62,7 @@ class FullModelShareableFedSMGenerator(ShareableGenerator):
         elif dxo_single_model.data_kind == DataKind.WEIGHTS:
             # update weights directly
             weights_new = dxo_single_model.data
-            if not weights_new:
-                self.log_info(
-                    fl_ctx,
-                    f"No model weights for {model_id} found. Model will not be updated.",
-                )
-            else:
-                base_model[ModelLearnableKey.WEIGHTS] = weights_new
+            base_model[ModelLearnableKey.WEIGHTS] = weights_new
         else:
             raise ValueError(
                 f"data_kind should be either DataKind.WEIGHTS or DataKind.WEIGHT_DIFF, but got {dxo_single_model.data_kind}"
