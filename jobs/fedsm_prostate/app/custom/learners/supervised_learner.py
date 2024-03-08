@@ -27,7 +27,6 @@ from nvflare.app_common.abstract.learner_spec import Learner
 from nvflare.app_common.app_constant import AppConstants, ValidateType
 from tqdm import tqdm
 
-
 from medclip.losses import ImageTextContrastiveLoss
 from medclip.modeling_medclip import MedCLIPModel, PromptClassifier, MedCLIPVisionModel, MedCLIPVisionModelViT
 from medclip.evaluator import Evaluator
@@ -140,7 +139,7 @@ class SupervisedLearner(Learner):
                 self.optimizer.zero_grad()
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                with autocast():
+                with autocast(dtype=torch.bfloat16):
                     loss_return = loss_model(**batch_data)
                     loss = loss_return['loss_value']
                 scaler.scale(loss).backward()

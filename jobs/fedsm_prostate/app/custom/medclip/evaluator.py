@@ -38,9 +38,7 @@ class Evaluator:
         label_list = []
         for data in tqdm(eval_dataloader, desc='Evaluation'):
             with torch.no_grad():
-                # for key, value in data.items():
-                #     if key != 'input_ids' and key != 'aug_input_ids':
-                #         data[key] = value.to(dtype=torch.float16)
+
                 outputs = self.clf(**data)
                 pred = outputs['logits']
             pred_list.append(pred)

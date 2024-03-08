@@ -112,8 +112,11 @@ def local_train(
         epoch_len = len(train_loader)
         progress_bar = tqdm(enumerate(train_loader), total=epoch_len, desc=f"Epoch {epoch} / {epochs}", leave=True)
         for i, batch_data in progress_bar:
+            # for key, value in data.items():
+            #     if key != 'input_ids' and key != 'aug_input_ids':
+            #         data[key] = value.to(dtype=torch.float16)
             optimizer.zero_grad()
-            with autocast():
+            with autocast(dtype = torch.bfloat16):
                 loss_return = loss_model(**batch_data)
                 loss = loss_return['loss_value']
             scaler.scale(loss).backward()

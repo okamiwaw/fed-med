@@ -28,17 +28,17 @@ class SupervisedPTFedSMHelper(PTFedSMHelper):
     """Helper to be used with FedSM components under supervised training specs"""
 
     def __init__(
-        self,
-        person_model,
-        select_model,
-        person_criterion,
-        select_criterion,
-        person_optimizer,
-        select_optimizer,
-        device,
-        app_dir,
-        person_model_epochs,
-        select_model_epochs,
+            self,
+            person_model,
+            select_model,
+            person_criterion,
+            select_criterion,
+            person_optimizer,
+            select_optimizer,
+            device,
+            app_dir,
+            person_model_epochs,
+            select_model_epochs,
     ):
         super().__init__(
             person_model,
@@ -68,7 +68,7 @@ class SupervisedPTFedSMHelper(PTFedSMHelper):
                 self.person_optimizer.zero_grad()
                 if abort_signal.triggered:
                     return make_reply(ReturnCode.TASK_ABORTED)
-                with autocast():
+                with autocast(dtype=torch.bfloat16):
                     loss_return = loss_model(**batch_data)
                     loss = loss_return['loss_value']
                 scaler.scale(loss).backward()
