@@ -219,26 +219,9 @@ class SupervisedMonaiProstateFedSMLearner(SupervisedMonaiProstateLearner):
         optim_weights = self.fedsm_helper.select_optimizer.state_dict().get("state")
         exp_avg = {}
         exp_avg_sq = {}
-        for name in optim_weights:
-            exp_avg[str(name)] = optim_weights[name]["exp_avg"].cpu().numpy()
-            exp_avg_sq[str(name)] = optim_weights[name]["exp_avg_sq"].cpu().numpy()
-        total_size_mbs = sum(arr.nbytes for arr in model_person.values()) / 1024 / 1024
-        print(f"Total size of model_person: {total_size_mbs:.2f} MB")
-        total_mb_global = sum(array.nbytes for array in model_diff_global.values()) / 1024 / 1024
-        total_mb_select = sum(array.nbytes for array in model_diff_select.values()) / 1024 / 1024
-        print(f"model_diff_global size is: {total_mb_global:.2f} MB")
-        print(f"model_diff_select size is: {total_mb_select:.2f} MB")
-        total_bytes = 0
-        for name, array in exp_avg.items():
-            # numpy数组的大小为数组中元素的数量乘以每个元素的字节大小
-            bytes_size = array.size * array.itemsize
-            total_bytes += bytes_size
-        print(f"model_diff_global size is: {total_bytes/ 1024 / 1024:.2f} MB")
-        for name, array in exp_avg_sq.items():
-            # numpy数组的大小为数组中元素的数量乘以每个元素的字节大小
-            bytes_size = array.size * array.itemsize
-            total_bytes += bytes_size
-        print(f"model_diff_global size is: {total_bytes/ 1024 / 1024:.2f} MB")
+        # for name in optim_weights:
+        #     exp_avg[str(name)] = optim_weights[name]["exp_avg"].cpu().numpy()
+        #     exp_avg_sq[str(name)] = optim_weights[name]["exp_avg_sq"].cpu().numpy()
         # build the shareable
         dxo_dict = {
             "global_weights": DXO(data_kind=DataKind.WEIGHT_DIFF, data=model_diff_global),
